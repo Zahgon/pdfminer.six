@@ -28,27 +28,10 @@ class NumberTree:
             self.limits = list_value(self._obj["Limits"])
 
     def _parse(self) -> list[tuple[int, Any]]:
-        items = []
-        if self.nums:  # Leaf node
-            for k, v in choplist(2, self.nums):
-                items.append((int_value(k), v))
-
-        if self.kids:  # Root or intermediate node
-            for child_ref in self.kids:
-                items += NumberTree(child_ref)._parse()
-
-        return items
+        pass
 
     values: list[tuple[int, Any]]  # workaround decorators unsupported by mypy
 
     @property  # type: ignore[no-redef,misc]
     def values(self) -> list[tuple[int, Any]]:
-        values = self._parse()
-
-        if settings.STRICT:
-            if not all(a[0] <= b[0] for a, b in itertools.pairwise(values)):
-                raise PDFSyntaxError("Number tree elements are out of order")
-        else:
-            values.sort(key=lambda t: t[0])
-
-        return values
+        pass

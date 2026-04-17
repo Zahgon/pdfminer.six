@@ -69,79 +69,7 @@ def extract_text_to_fp(
     :return: nothing, acting as it does on two streams. Use StringIO to get
         strings.
     """
-    if debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    imagewriter = None
-    if output_dir:
-        imagewriter = ImageWriter(output_dir)
-
-    rsrcmgr = PDFResourceManager(caching=not disable_caching)
-    device: PDFDevice | None = None
-
-    if output_type != "text" and outfp == sys.stdout:
-        outfp = sys.stdout.buffer
-
-    if output_type == "text":
-        device = TextConverter(
-            rsrcmgr,
-            outfp,
-            codec=codec,
-            laparams=laparams,
-            imagewriter=imagewriter,
-        )
-
-    elif output_type == "xml":
-        device = XMLConverter(
-            rsrcmgr,
-            outfp,
-            codec=codec,
-            laparams=laparams,
-            imagewriter=imagewriter,
-            stripcontrol=strip_control,
-        )
-
-    elif output_type == "html":
-        device = HTMLConverter(
-            rsrcmgr,
-            outfp,
-            codec=codec,
-            scale=scale,
-            layoutmode=layoutmode,
-            laparams=laparams,
-            imagewriter=imagewriter,
-        )
-
-    elif output_type == "hocr":
-        device = HOCRConverter(
-            rsrcmgr,
-            outfp,
-            codec=codec,
-            laparams=laparams,
-            stripcontrol=strip_control,
-        )
-
-    elif output_type == "tag":
-        # Binary I/O is required, but we have no good way to test it here.
-        device = TagExtractor(rsrcmgr, cast(BinaryIO, outfp), codec=codec)
-
-    else:
-        msg = f"Output type can be text, html, xml or tag but is {output_type}"
-        raise PDFValueError(msg)
-
-    assert device is not None
-    interpreter = PDFPageInterpreter(rsrcmgr, device)
-    for page in PDFPage.get_pages(
-        inf,
-        page_numbers,
-        maxpages=maxpages,
-        password=password,
-        caching=not disable_caching,
-    ):
-        page.rotate = (page.rotate + rotation) % 360
-        interpreter.process_page(page)
-
-    device.close()
+    pass
 
 
 def extract_text(
@@ -166,25 +94,7 @@ def extract_text(
         some default settings that often work well.
     :return: a string containing all of the text extracted.
     """
-    if laparams is None:
-        laparams = LAParams()
-
-    with open_filename(pdf_file, "rb") as fp, StringIO() as output_string:
-        fp = cast(BinaryIO, fp)  # we opened in binary mode
-        rsrcmgr = PDFResourceManager(caching=caching)
-        device = TextConverter(rsrcmgr, output_string, codec=codec, laparams=laparams)
-        interpreter = PDFPageInterpreter(rsrcmgr, device)
-
-        for page in PDFPage.get_pages(
-            fp,
-            page_numbers,
-            maxpages=maxpages,
-            password=password,
-            caching=caching,
-        ):
-            interpreter.process_page(page)
-
-        return output_string.getvalue()
+    pass
 
 
 def extract_pages(
@@ -207,21 +117,4 @@ def extract_pages(
         some default settings that often work well.
     :return: LTPage objects
     """
-    if laparams is None:
-        laparams = LAParams()
-
-    with open_filename(pdf_file, "rb") as fp:
-        fp = cast(BinaryIO, fp)  # we opened in binary mode
-        resource_manager = PDFResourceManager(caching=caching)
-        device = PDFPageAggregator(resource_manager, laparams=laparams)
-        interpreter = PDFPageInterpreter(resource_manager, device)
-        for page in PDFPage.get_pages(
-            fp,
-            page_numbers,
-            maxpages=maxpages,
-            password=password,
-            caching=caching,
-        ):
-            interpreter.process_page(page)
-            layout = device.get_result()
-            yield layout
+    pass

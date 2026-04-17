@@ -27,46 +27,7 @@ def name2unicode(name: str) -> str:
     :returns unicode character if name resembles something,
     otherwise a KeyError
     """
-    if not isinstance(name, str):
-        raise PDFKeyError(
-            f'Could not convert unicode name "{name}" to character because '
-            f"it should be of type str but is of type {type(name)}",
-        )
-
-    name = name.split(".")[0]
-    components = name.split("_")
-
-    if len(components) > 1:
-        return "".join(map(name2unicode, components))
-
-    elif name in glyphname2unicode:
-        return glyphname2unicode[name]
-
-    elif name.startswith("uni"):
-        name_without_uni = name.strip("uni")
-
-        if HEXADECIMAL.match(name_without_uni) and len(name_without_uni) % 4 == 0:
-            unicode_digits = [
-                int(name_without_uni[i : i + 4], base=16)
-                for i in range(0, len(name_without_uni), 4)
-            ]
-            for digit in unicode_digits:
-                raise_key_error_for_invalid_unicode(digit)
-            characters = map(chr, unicode_digits)
-            return "".join(characters)
-
-    elif name.startswith("u"):
-        name_without_u = name.strip("u")
-
-        if HEXADECIMAL.match(name_without_u) and 4 <= len(name_without_u) <= 6:
-            unicode_digit = int(name_without_u, base=16)
-            raise_key_error_for_invalid_unicode(unicode_digit)
-            return chr(unicode_digit)
-
-    raise PDFKeyError(
-        f'Could not convert unicode name "{name}" to character because '
-        "it does not match specification",
-    )
+    pass
 
 
 def raise_key_error_for_invalid_unicode(unicode_digit: int) -> None:
@@ -75,11 +36,7 @@ def raise_key_error_for_invalid_unicode(unicode_digit: int) -> None:
 
     :raises KeyError if unicode digit is invalid
     """
-    if 55295 < unicode_digit < 57344:
-        raise PDFKeyError(
-            f"Unicode digit {unicode_digit} is invalid because "
-            "it is in the range D800 through DFFF",
-        )
+    pass
 
 
 class EncodingDB:
@@ -111,17 +68,4 @@ class EncodingDB:
         name: str,
         diff: Iterable[object] | None = None,
     ) -> dict[int, str]:
-        cid2unicode = cls.encodings.get(name, cls.std2unicode)
-        if diff:
-            cid2unicode = cid2unicode.copy()
-            cid = 0
-            for x in diff:
-                if isinstance(x, int):
-                    cid = x
-                elif isinstance(x, PSLiteral):
-                    try:
-                        cid2unicode[cid] = name2unicode(cast(str, x.name))
-                    except (KeyError, ValueError) as e:
-                        log.debug(str(e))
-                    cid += 1
-        return cid2unicode
+        pass

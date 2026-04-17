@@ -29,7 +29,7 @@ PIL_ERROR_MESSAGE = (
 
 
 def align32(x: int) -> int:
-    return ((x + 3) // 4) * 4
+    pass
 
 
 class BMPWriter:
@@ -88,8 +88,7 @@ class BMPWriter:
         self.pos1 = self.pos0 + self.datasize
 
     def write_line(self, y: int, data: bytes) -> None:
-        self.fp.seek(self.pos1 - (y + 1) * self.linesize)
-        self.fp.write(data)
+        pass
 
 
 class ImageWriter:
@@ -105,115 +104,19 @@ class ImageWriter:
 
     def export_image(self, image: LTImage) -> str:
         """Save an LTImage to disk"""
-        (width, height) = image.srcsize
-
-        filters = image.stream.get_filters()
-
-        if not filters:
-            name = self._save_bytes(image)
-
-        elif filters[-1][0] in LITERALS_DCT_DECODE:
-            name = self._save_jpeg(image)
-
-        elif filters[-1][0] in LITERALS_JPX_DECODE:
-            name = self._save_jpeg2000(image)
-
-        elif self._is_jbig2_iamge(image):
-            name = self._save_jbig2(image)
-
-        elif image.bits == 1:
-            name = self._save_bmp(image, width, height, (width + 7) // 8, image.bits)
-
-        elif image.bits == 8 and (
-            LITERAL_DEVICE_RGB in image.colorspace
-            or LITERAL_INLINE_DEVICE_RGB in image.colorspace
-        ):
-            name = self._save_bmp(image, width, height, width * 3, image.bits * 3)
-
-        elif image.bits == 8 and (
-            LITERAL_DEVICE_GRAY in image.colorspace
-            or LITERAL_INLINE_DEVICE_GRAY in image.colorspace
-        ):
-            name = self._save_bmp(image, width, height, width, image.bits)
-
-        elif len(filters) == 1 and filters[0][0] in LITERALS_FLATE_DECODE:
-            name = self._save_bytes(image)
-
-        else:
-            name = self._save_raw(image)
-
-        return name
+        pass
 
     def _save_jpeg(self, image: LTImage) -> str:
         """Save a JPEG encoded image"""
-        data = image.stream.get_data()
-
-        name, path = self._create_unique_image_name(image, ".jpg")
-        with open(path, "wb") as fp:
-            if LITERAL_DEVICE_CMYK in image.colorspace:
-                try:
-                    from PIL import Image, ImageChops  # type: ignore[import]
-                except ImportError as err:
-                    raise ImportError(PIL_ERROR_MESSAGE) from err
-
-                ifp = BytesIO(data)
-                img = Image.open(ifp)
-                inverted = ImageChops.invert(img)
-                rgb_img = inverted.convert("RGB")
-                rgb_img.save(fp, "JPEG")
-            else:
-                fp.write(data)
-
-        return name
+        pass
 
     def _save_jpeg2000(self, image: LTImage) -> str:
         """Save a JPEG 2000 encoded image"""
-        data = image.stream.get_data()
-
-        name, path = self._create_unique_image_name(image, ".jp2")
-        with open(path, "wb") as fp:
-            try:
-                from PIL import Image  # type: ignore[import]
-            except ImportError as err:
-                raise ImportError(PIL_ERROR_MESSAGE) from err
-
-            # if we just write the raw data, most image programs
-            # that I have tried cannot open the file. However,
-            # open and saving with PIL produces a file that
-            # seems to be easily opened by other programs
-            ifp = BytesIO(data)
-            i = Image.open(ifp)
-            i.save(fp, "JPEG2000")
-        return name
+        pass
 
     def _save_jbig2(self, image: LTImage) -> str:
         """Save a JBIG2 encoded image"""
-        name, path = self._create_unique_image_name(image, ".jb2")
-        with open(path, "wb") as fp:
-            input_stream = BytesIO()
-
-            global_streams = []
-            filters = image.stream.get_filters()
-            for filter_name, params in filters:
-                if filter_name in LITERALS_JBIG2_DECODE:
-                    global_streams.append(params["JBIG2Globals"].resolve())
-
-            if len(global_streams) > 1:
-                msg = (
-                    "There should never be more than one JBIG2Globals "
-                    "associated with a JBIG2 embedded image"
-                )
-                raise PDFValueError(msg)
-            if len(global_streams) == 1:
-                input_stream.write(global_streams[0].get_data().rstrip(b"\n"))
-            input_stream.write(image.stream.get_data())
-            input_stream.seek(0)
-            reader = JBIG2StreamReader(input_stream)
-            segments = reader.get_segments()
-
-            writer = JBIG2StreamWriter(fp)
-            writer.write_file(segments)
-        return name
+        pass
 
     def _save_bmp(
         self,
@@ -224,71 +127,19 @@ class ImageWriter:
         bits: int,
     ) -> str:
         """Save a BMP encoded image"""
-        name, path = self._create_unique_image_name(image, ".bmp")
-        with open(path, "wb") as fp:
-            bmp = BMPWriter(fp, bits, width, height)
-            data = image.stream.get_data()
-            i = 0
-            for y in range(height):
-                bmp.write_line(y, data[i : i + bytes_per_line])
-                i += bytes_per_line
-        return name
+        pass
 
     def _save_bytes(self, image: LTImage) -> str:
         """Save an image without encoding, just bytes"""
-        name, path = self._create_unique_image_name(image, ".jpg")
-        width, height = image.srcsize
-        channels = len(image.stream.get_data()) / width / height / (image.bits / 8)
-        with open(path, "wb") as fp:
-            try:
-                from PIL import (
-                    Image,  # type: ignore[import]
-                    ImageOps,
-                )
-            except ImportError as err:
-                raise ImportError(PIL_ERROR_MESSAGE) from err
-
-            mode: Literal["1", "L", "RGB", "CMYK"]
-            if image.bits == 1:
-                mode = "1"
-            elif image.bits == 8 and channels == 1:
-                mode = "L"
-            elif image.bits == 8 and channels == 3:
-                mode = "RGB"
-            elif image.bits == 8 and channels == 4:
-                mode = "CMYK"
-
-            img = Image.frombytes(mode, image.srcsize, image.stream.get_data(), "raw")
-            if mode == "L":
-                img = ImageOps.invert(img)
-
-            img.save(fp)
-
-        return name
+        pass
 
     def _save_raw(self, image: LTImage) -> str:
         """Save an image with unknown encoding"""
-        ext = f".{image.bits}.{image.srcsize[0]}x{image.srcsize[1]}.img"
-        name, path = self._create_unique_image_name(image, ext)
-
-        with open(path, "wb") as fp:
-            fp.write(image.stream.get_data())
-        return name
+        pass
 
     @staticmethod
     def _is_jbig2_iamge(image: LTImage) -> bool:
-        filters = image.stream.get_filters()
-        for filter_name, _params in filters:
-            if filter_name in LITERALS_JBIG2_DECODE:
-                return True
-        return False
+        pass
 
     def _create_unique_image_name(self, image: LTImage, ext: str) -> tuple[str, str]:
-        name = image.name + ext
-        path = os.path.join(self.outdir, name)
-        img_index = 0
-        while os.path.exists(path):
-            name = f"{image.name}.{img_index}{ext}"
-            path = os.path.join(self.outdir, name)
-            img_index += 1
-        return name, path
+        pass

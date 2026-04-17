@@ -22,9 +22,7 @@ def ascii85decode(data: bytes) -> bytes:
     ASCII85 digits, so we can't strip them.  We settle on a compromise
     where we strip leading `<~` or `~` and trailing `~` or `~>`.
     """
-    data = start_re.sub(b"", data)
-    data = end_re.sub(b"", data)
-    return a85decode(data)
+    pass
 
 
 bws_re = re.compile(rb"\s")
@@ -39,10 +37,4 @@ def asciihexdecode(data: bytes) -> bytes:
     the EOD marker after reading an odd number of hexadecimal digits, it
     will behave as if a 0 followed the last digit.
     """
-    data = bws_re.sub(b"", data)
-    idx = data.find(b">")
-    if idx != -1:
-        data = data[:idx]
-        if idx % 2 == 1:
-            data += b"0"
-    return unhexlify(data)
+    pass

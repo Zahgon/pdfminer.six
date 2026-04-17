@@ -20,16 +20,6 @@ class Arcfour:
         (self.i, self.j) = (0, 0)
 
     def process(self, data: bytes) -> bytes:
-        (i, j) = (self.i, self.j)
-        s = self.s
-        r = b""
-        for c in iter(data):
-            i = (i + 1) % 256
-            j = (j + s[i]) % 256
-            (s[i], s[j]) = (s[j], s[i])
-            k = s[(s[i] + s[j]) % 256]
-            r += bytes((c ^ k,))
-        (self.i, self.j) = (i, j)
-        return r
+        pass
 
     encrypt = decrypt = process

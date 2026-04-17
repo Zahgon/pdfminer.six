@@ -23,7 +23,7 @@ from pdfminer.pdfexceptions import PDFException, PDFValueError
 
 
 def get_bytes(data: bytes) -> Iterator[int]:
-    yield from data
+    pass
 
 
 # Workaround https://github.com/python/mypy/issues/731
@@ -57,18 +57,10 @@ class BitParser:
         p[b] = v
 
     def feedbytes(self, data: bytes) -> None:
-        for byte in get_bytes(data):
-            for m in (128, 64, 32, 16, 8, 4, 2, 1):
-                self._parse_bit(byte & m)
+        pass
 
     def _parse_bit(self, x: object) -> None:
-        v = self._state[1] if x else self._state[0]
-        self._pos += 1
-        if isinstance(v, list):
-            self._state = v
-        else:
-            assert self._accept is not None
-            self._state = self._accept(v)
+        pass
 
 
 class CCITTG4Parser(BitParser):
@@ -341,192 +333,49 @@ class CCITTG4Parser(BitParser):
         self.reset()
 
     def feedbytes(self, data: bytes) -> None:
-        for byte in get_bytes(data):
-            try:
-                for m in (128, 64, 32, 16, 8, 4, 2, 1):
-                    self._parse_bit(byte & m)
-            except self.ByteSkip:
-                self._accept = self._parse_mode
-                self._state = self.MODE
-            except self.EOFB:
-                break
+        pass
 
     def _parse_mode(self, mode: object) -> BitParserState:
-        if mode == "p":
-            self._do_pass()
-            self._flush_line()
-            return self.MODE
-        elif mode == "h":
-            self._n1 = 0
-            self._accept = self._parse_horiz1
-            if self._color:
-                return self.WHITE
-            else:
-                return self.BLACK
-        elif mode == "u":
-            self._accept = self._parse_uncompressed
-            return self.UNCOMPRESSED
-        elif mode == "e":
-            raise self.EOFB
-        elif isinstance(mode, int):
-            self._do_vertical(mode)
-            self._flush_line()
-            return self.MODE
-        else:
-            raise self.InvalidData(mode)
+        pass
 
     def _parse_horiz1(self, n: Any) -> BitParserState:
-        if n is None:
-            raise self.InvalidData
-        self._n1 += n
-        if n < 64:
-            self._n2 = 0
-            self._color = 1 - self._color
-            self._accept = self._parse_horiz2
-        if self._color:
-            return self.WHITE
-        else:
-            return self.BLACK
+        pass
 
     def _parse_horiz2(self, n: Any) -> BitParserState:
-        if n is None:
-            raise self.InvalidData
-        self._n2 += n
-        if n < 64:
-            self._color = 1 - self._color
-            self._accept = self._parse_mode
-            self._do_horizontal(self._n1, self._n2)
-            self._flush_line()
-            return self.MODE
-        elif self._color:
-            return self.WHITE
-        else:
-            return self.BLACK
+        pass
 
     def _parse_uncompressed(self, bits: str | None) -> BitParserState:
-        if not bits:
-            raise self.InvalidData
-        if bits.startswith("T"):
-            self._accept = self._parse_mode
-            self._color = int(bits[1])
-            self._do_uncompressed(bits[2:])
-            return self.MODE
-        else:
-            self._do_uncompressed(bits)
-            return self.UNCOMPRESSED
+        pass
 
     def _get_bits(self) -> str:
-        return "".join(str(b) for b in self._curline[: self._curpos])
+        pass
 
     def _get_refline(self, i: int) -> str:
-        if i < 0:
-            return "[]" + "".join(str(b) for b in self._refline)
-        elif len(self._refline) <= i:
-            return "".join(str(b) for b in self._refline) + "[]"
-        else:
-            return (
-                "".join(str(b) for b in self._refline[:i])
-                + "["
-                + str(self._refline[i])
-                + "]"
-                + "".join(str(b) for b in self._refline[i + 1 :])
-            )
+        pass
 
     def reset(self) -> None:
-        self._y = 0
-        self._curline = array.array("b", [1] * self.width)
-        self._reset_line()
-        self._accept = self._parse_mode
-        self._state = self.MODE
+        pass
 
     def output_line(self, y: int, bits: Sequence[int]) -> None:
-        print(y, "".join(str(b) for b in bits))
+        pass
 
     def _reset_line(self) -> None:
-        self._refline = self._curline
-        self._curline = array.array("b", [1] * self.width)
-        self._curpos = -1
-        self._color = 1
+        pass
 
     def _flush_line(self) -> None:
-        if self.width <= self._curpos:
-            self.output_line(self._y, self._curline)
-            self._y += 1
-            self._reset_line()
-            if self.bytealign:
-                raise self.ByteSkip
+        pass
 
     def _do_vertical(self, dx: int) -> None:
-        x1 = self._curpos + 1
-        while 1:
-            if x1 == 0:
-                if self._color == 1 and self._refline[x1] != self._color:
-                    break
-            elif x1 == len(self._refline) or (
-                self._refline[x1 - 1] == self._color
-                and self._refline[x1] != self._color
-            ):
-                break
-            x1 += 1
-        x1 += dx
-        x0 = max(0, self._curpos)
-        x1 = max(0, min(self.width, x1))
-        if x1 < x0:
-            for x in range(x1, x0):
-                self._curline[x] = self._color
-        elif x0 < x1:
-            for x in range(x0, x1):
-                self._curline[x] = self._color
-        self._curpos = x1
-        self._color = 1 - self._color
+        pass
 
     def _do_pass(self) -> None:
-        x1 = self._curpos + 1
-        while 1:
-            if x1 == 0:
-                if self._color == 1 and self._refline[x1] != self._color:
-                    break
-            elif x1 == len(self._refline) or (
-                self._refline[x1 - 1] == self._color
-                and self._refline[x1] != self._color
-            ):
-                break
-            x1 += 1
-        while 1:
-            if x1 == 0:
-                if self._color == 0 and self._refline[x1] == self._color:
-                    break
-            elif x1 == len(self._refline) or (
-                self._refline[x1 - 1] != self._color
-                and self._refline[x1] == self._color
-            ):
-                break
-            x1 += 1
-        for x in range(self._curpos, x1):
-            self._curline[x] = self._color
-        self._curpos = x1
+        pass
 
     def _do_horizontal(self, n1: int, n2: int) -> None:
-        if self._curpos < 0:
-            self._curpos = 0
-        x = self._curpos
-        for _ in range(n1):
-            if len(self._curline) <= x:
-                break
-            self._curline[x] = self._color
-            x += 1
-        for _ in range(n2):
-            if len(self._curline) <= x:
-                break
-            self._curline[x] = 1 - self._color
-            x += 1
-        self._curpos = x
+        pass
 
     def _do_uncompressed(self, bits: str) -> None:
-        for c in bits:
-            self._curline[self._curpos] = int(c)
-            self._curpos += 1
-            self._flush_line()
+        pass
 
 
 class CCITTFaxDecoder(CCITTG4Parser):
@@ -541,61 +390,16 @@ class CCITTFaxDecoder(CCITTG4Parser):
         self._buf = b""
 
     def close(self) -> bytes:
-        return self._buf
+        pass
 
     def output_line(self, y: int, bits: Sequence[int]) -> None:
-        arr = array.array("B", [0] * ((len(bits) + 7) // 8))
-        if self.reversed:
-            bits = [1 - b for b in bits]
-        for i, b in enumerate(bits):
-            if b:
-                arr[i // 8] += (128, 64, 32, 16, 8, 4, 2, 1)[i % 8]
-        self._buf += arr.tobytes()
+        pass
 
 
 def ccittfaxdecode(data: bytes, params: dict[str, object]) -> bytes:
-    K = params.get("K")
-    if K == -1:
-        cols = cast(int, params.get("Columns"))
-        bytealign = cast(bool, params.get("EncodedByteAlign"))
-        reversed = cast(bool, params.get("BlackIs1"))
-        parser = CCITTFaxDecoder(cols, bytealign=bytealign, reversed=reversed)
-    else:
-        raise PDFValueError(K)
-    parser.feedbytes(data)
-    return parser.close()
+    pass
 
 
 # test
 def main(argv: list[str]) -> None:
-    if not argv[1:]:
-        import unittest
-
-        unittest.main()
-        return
-
-    class Parser(CCITTG4Parser):
-        def __init__(self, width: int, bytealign: bool = False) -> None:
-            import pygame  # type: ignore[import]
-
-            CCITTG4Parser.__init__(self, width, bytealign=bytealign)
-            self.img = pygame.Surface((self.width, 1000))
-
-        def output_line(self, y: int, bits: Sequence[int]) -> None:
-            for x, b in enumerate(bits):
-                if b:
-                    self.img.set_at((x, y), (255, 255, 255))
-                else:
-                    self.img.set_at((x, y), (0, 0, 0))
-
-        def close(self) -> None:
-            import pygame
-
-            pygame.image.save(self.img, "out.bmp")
-
-    for path in argv[1:]:
-        with open(path, "rb") as fp:
-            (_, _, _k, w, _h, _) = path.split(".")
-            parser = Parser(int(w))
-            parser.feedbytes(fp.read())
-            parser.close()
+    pass
